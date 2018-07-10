@@ -30,9 +30,9 @@ class Tongue(pygame.sprite.Sprite):
     def __init__(self, player):
         pygame.sprite.Sprite.__init__(self)
         self.fatness = 1
-        self.tallness = 5
+        self.tallness = 6
         self.image = pygame.Surface([self.fatness, self.tallness])
-        self.image.fill((255, 255, 255))
+        self.image.fill((200, 200, 200))
         self.rect = self.image.get_rect()
         self.player = player
         self.length = 1
@@ -66,16 +66,16 @@ class Tongue(pygame.sprite.Sprite):
         self.attacking = True
         
     def extend(self):
-        self.length += 10
-        self.image = pygame.transform.scale(self.image, (self.length, 5))            
+        self.length += 15
+        self.image = pygame.transform.scale(self.image, (self.length, 6))            
 
     def retract(self):
-        if self.length > 10:
-            self.length -= 10
-            self.image = pygame.transform.scale(self.image, (self.length, 5))
+        if self.length > 15:
+            self.length -= 15
+            self.image = pygame.transform.scale(self.image, (self.length, 6))
         else:
             self.length = 1
-            self.image = pygame.transform.scale(self.image, (self.length, 5))
+            self.image = pygame.transform.scale(self.image, (self.length, 6))
             self.attacking = False
             self.time = 0
             self.hit = False          
@@ -91,20 +91,21 @@ class Food(pygame.sprite.Sprite):
         self.image = pygame.Surface((25, 20))
         self.image.fill((255, 100, 100))
         self.rect = self.image.get_rect()
-        self.rect.x = random.randrange(1000)
-        self.rect.y = random.randrange(600, 1200)
-        self.speedx = 0
-        self.speedy = random.randrange(-2, -1)
+        self.rect.x = random.randrange(1000, 2000)
+        self.rect.y = random.randrange(600)
+        self.speedx = random.randrange(-2, -1)
+        self.speedy = 0
 
     def update(self):
         self.rect.y += self.speedy
         self.rect.x += self.speedx
         if self.rect.bottom < 0 or self.rect.left > self.width or self.rect.right < 0:
-            self.rect.x = random.randrange(1000)
-            self.rect.y = random.randrange(600, 800)
-            self.speedx = 0
-            self.speedy = random.randrange(-3, -1)
-            
+            self.rect.x = random.randrange(1000, 2000)
+            self.rect.y = random.randrange(600)
+            self.speedx = random.randrange(-2, -1)
+            self.speedy = 0
+
+
 def main():
     pygame.init()
 
@@ -120,7 +121,7 @@ def main():
     yummies = pygame.sprite.Group()
     grabbies = pygame.sprite.Group()
 
-    for i in range(60):
+    for i in range(15):
         fish = Food(WIDTH, DEPTH)
         all_sprites.add(fish)
         yummies.add(fish)
@@ -137,7 +138,7 @@ def main():
     while running:
         
         clock.tick(60)
-        speed = 8
+        speed = 4
 
         keys = pygame.key.get_pressed()
 
@@ -148,9 +149,9 @@ def main():
                 tongue.attack()
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
-            player.moving_x(-speed)
+            player.moving_x(-15)
         if keys[pygame.K_RIGHT] and player.rect.right < WIDTH:
-            player.moving_x(speed)
+            player.moving_x(8)
         if keys[pygame.K_UP] and player.rect.top > 0:
             player.moving_y(-speed)
         if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
