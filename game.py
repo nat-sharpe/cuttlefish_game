@@ -54,18 +54,13 @@ class Tongue(pygame.sprite.Sprite):
             self.time += 1
             if self.time == 1:
                 self.extend()
-            elif self.time <= (self.speed * self.dist_extend):
+            if self.time <= 10:
                 if self.hit:
                    self.retract() 
                 else:
                     self.extend()
-            elif self.time % self.speed == 0 and self.time > (self.speed * self.dist_extend) and self.time <= (self.speed * self.dist_retract):
+            if self.time > 10:
                 self.retract()
-            elif self.time > (self.speed * self.dist_retract):
-                self.attacking = False
-                self.time = 0
-                self.hit = False
-
 
     def attack(self):
         self.attacking = True
@@ -75,12 +70,15 @@ class Tongue(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (self.length, 5))            
 
     def retract(self):
-        if self.rect.right > self.player.rect.right:
+        if self.length > 10:
             self.length -= 10
             self.image = pygame.transform.scale(self.image, (self.length, 5))
         else:
             self.length = 1
-            self.image = pygame.transform.scale(self.image, (self.length, 5))            
+            self.image = pygame.transform.scale(self.image, (self.length, 5))
+            self.attacking = False
+            self.time = 0
+            self.hit = False          
 
     def bullseye(self):
         self.hit = True
@@ -142,9 +140,9 @@ def main():
                 running = False
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
-            player.moving_x(-speed)
+            player.moving_x(-speed*2)
         if keys[pygame.K_RIGHT] and player.rect.right < WIDTH:
-            player.moving_x(speed)
+            player.moving_x(speed*2)
         if keys[pygame.K_UP] and player.rect.top > 0:
             player.moving_y(-speed)
         if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
@@ -154,7 +152,7 @@ def main():
             tongue.attack()             
 
         all_sprites.update()
-
+    
         hit = pygame.sprite.groupcollide(grabbies, yummies, False, True)
         if hit:
             tongue.bullseye()
