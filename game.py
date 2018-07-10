@@ -131,7 +131,7 @@ def main():
     while running:
         
         clock.tick(60)
-        speed = 2
+        speed = 3
 
         keys = pygame.key.get_pressed()
 
@@ -140,9 +140,9 @@ def main():
                 running = False
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
-            player.moving_x(-speed*2)
+            player.moving_x(-speed * 2)
         if keys[pygame.K_RIGHT] and player.rect.right < WIDTH:
-            player.moving_x(speed*2)
+            player.moving_x(speed * 2)
         if keys[pygame.K_UP] and player.rect.top > 0:
             player.moving_y(-speed)
         if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
@@ -152,10 +152,11 @@ def main():
             tongue.attack()             
 
         all_sprites.update()
-    
-        hit = pygame.sprite.groupcollide(grabbies, yummies, False, True)
-        if hit:
-            tongue.bullseye()
+
+        if tongue.length > 1:
+            hit = pygame.sprite.groupcollide(grabbies, yummies, False, True)
+            if hit:
+                tongue.bullseye()
 
         screen.fill((0, 0, 0)) 
         all_sprites.draw(screen)
