@@ -84,19 +84,27 @@ class Tongue(pygame.sprite.Sprite):
         self.hit = True
 
 class Food(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, WIDTH, DEPTH):
         pygame.sprite.Sprite.__init__(self)
-        self.fatness = 25
-        self.tallness = 20
-        self.image = pygame.Surface([self.fatness, self.tallness])
-        self.image.fill((255, 200, 100))
+        self.width = WIDTH
+        self.depth = DEPTH
+        self.image = pygame.Surface((25, 20))
+        self.image.fill((255, 100, 100))
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = random.randrange(1000)
+        self.rect.y = random.randrange(600, 1200)
+        self.speedx = 0
+        self.speedy = random.randrange(-2, -1)
 
-    def update(self):   
-        pass
-
+    def update(self):
+        self.rect.y += self.speedy
+        self.rect.x += self.speedx
+        if self.rect.bottom < 0 or self.rect.left > self.width or self.rect.right < 0:
+            self.rect.x = random.randrange(1000)
+            self.rect.y = random.randrange(600, 800)
+            self.speedx = 0
+            self.speedy = random.randrange(-3, -1)
+            
 def main():
     pygame.init()
 
@@ -112,10 +120,8 @@ def main():
     yummies = pygame.sprite.Group()
     grabbies = pygame.sprite.Group()
 
-    for i in range(30):
-        x = random.randrange(WIDTH)
-        y = random.randrange(DEPTH)
-        fish = Food(x, y)
+    for i in range(60):
+        fish = Food(WIDTH, DEPTH)
         all_sprites.add(fish)
         yummies.add(fish)
 
@@ -131,7 +137,7 @@ def main():
     while running:
         
         clock.tick(60)
-        speed = 3
+        speed = 8
 
         keys = pygame.key.get_pressed()
 
@@ -142,9 +148,9 @@ def main():
                 tongue.attack()
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
-            player.moving_x(-speed * 2)
+            player.moving_x(-speed)
         if keys[pygame.K_RIGHT] and player.rect.right < WIDTH:
-            player.moving_x(speed * 2)
+            player.moving_x(speed)
         if keys[pygame.K_UP] and player.rect.top > 0:
             player.moving_y(-speed)
         if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
