@@ -1,5 +1,4 @@
 import pygame
-import math
 pygame.init()
 WIDTH = 1000
 DEPTH = 600
@@ -20,22 +19,17 @@ class Player(pygame.sprite.Sprite):
         self.move_x = 0
         self.move_y = 0
 
-    def update(self, keys):   
+    def update(self):   
+        self.rect.x += self.move_x
+        self.rect.y += self.move_y
         self.move_x = 0
         self.move_y = 0
 
-        if keys[pygame.K_LEFT] and self.rect.left > 0:
-            self.move_x = -10
-        if keys[pygame.K_RIGHT] and self.rect.right < WIDTH:
-            self.move_x = 10
-        if keys[pygame.K_UP] and self.rect.top > 0:
-            self.move_y = -10
-        if keys[pygame.K_DOWN] and self.rect.bottom < DEPTH:
-            self.move_y = 10
+    def moving_x(self, direction):
+        self.move_x = direction
 
-        # changes player's position to next move spot
-        self.rect.x += self.move_x
-        self.rect.y += self.move_y
+    def moving_y(self, direction):
+        self.move_y = direction
         
 class Other(pygame.sprite.Sprite):
     def __init__(self, player):
@@ -46,60 +40,75 @@ class Other(pygame.sprite.Sprite):
         self.image.fill((255, 255, 255))
         self.rect = self.image.get_rect()
         self.player = player
+        self.length = 0
+        self.rect.left = self.player.rect.right
+        self.rect.centery = self.player.rect.centery
+        self.attacking = False
+        self.time = 0
 
+    def update(self):
         self.rect.left = self.player.rect.right
         self.rect.centery = self.player.rect.centery
 
-    def update(self, keys):
-        self.rect.left += self.player.move_x
-        self.rect.centery += self.player.move_y
-        if keys[pygame.K_SPACE]:
-            self.extend()
-        else:
-            self.retract()
-      
+        if self.attacking:
+            self.time += 1
+            if self.time == 1:
+                self.extend()
+            elif self.time % 3 == 0 and self.time < 240:
+                self.extend()
+            elif self.time % 3 == 0 and self.time < 540 and self.length > 1:
+                self.retract()
+            elif self.time > 540:
+                self.attacking = False
+                self.time = 0
+                self.length = 1
+
+
+    def attack(self):
+        self.attacking = True
+        
     def extend(self):
-        self.image = pygame.transform.scale(self.image, (100, 5))
+        self.length += 1
+        self.image = pygame.transform.scale(self.image, (self.length, 5))
 
     def retract(self):
-        self.image = pygame.transform.scale(self.image, (1, 5))
-
-#  def update(self, keys):
-#         self.image = pygame.transform.scale(self.image, (5, 5))
-#         self.rect.left += self.player.move_x
-#         self.rect.centery += self.player.move_y
-#         if keys[pygame.K_SPACE] and self.length < 500:
-#             self.length += self.length
-#             self.extend()
-#         else:  
-#             self.length = self.fatness
-    
-#     def extend(self):
-#         self.image = pygame.transform.scale(self.image, (self.length, 5))
-
-#     # def retract(self):
-#     #     self.image = pygame.transform.scale(self.image, (1, 5))
+        self.length -= 1
+        self.image = pygame.transform.scale(self.image, (self.length, 5))
 
 def main():
+
     player = Player(40, 40, 200, 400)
     tongue = Other(player)
 
     all_sprites = pygame.sprite.Group()
     all_sprites.add(player)
     all_sprites.add(tongue)
-
-
+    
     running = True
     while running:
         
         clock.tick(60)
+        speed = 10
+
         keys = pygame.key.get_pressed()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT or keys[pygame.K_q]:
                 running = False
 
-        all_sprites.update(keys)
+        if keys[pygame.K_LEFT] and player.rect.left > 0:
+            player.moving_x(-speed)
+        if keys[pygame.K_RIGHT] and player.rect.right < WIDTH:
+            player.moving_x(speed)
+        if keys[pygame.K_UP] and player.rect.top > 0:
+            player.moving_y(-speed)
+        if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
+            player.moving_y(speed)
+
+        if keys[pygame.K_SPACE]:
+            tongue.attack()             
+
+        all_sprites.update()
 
         screen.fill((0, 0, 0)) 
         all_sprites.draw(screen)
