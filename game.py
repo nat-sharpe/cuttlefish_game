@@ -138,6 +138,8 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT or keys[pygame.K_q]:
                 running = False
+            if event.type == pygame.KEYDOWN and event.key == 32:
+                tongue.attack()
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
             player.moving_x(-speed * 2)
@@ -146,10 +148,7 @@ def main():
         if keys[pygame.K_UP] and player.rect.top > 0:
             player.moving_y(-speed)
         if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
-            player.moving_y(speed)
-
-        if keys[pygame.K_SPACE]:
-            tongue.attack()             
+            player.moving_y(speed)             
 
         all_sprites.update()
 
