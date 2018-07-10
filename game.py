@@ -56,6 +56,7 @@ class Tongue(pygame.sprite.Sprite):
                 self.extend()
             if self.time <= 10:
                 if self.hit:
+
                    self.retract() 
                 else:
                     self.extend()
@@ -104,6 +105,11 @@ class Food(pygame.sprite.Sprite):
             self.rect.y = random.randrange(600)
             self.speedx = random.randrange(-2, -1)
             self.speedy = 0
+    
+    def change_course(self):
+        self.speedx = random.randrange(-1, 2)
+        self.speedy = random.randrange(-1, 1)
+
 
 
 def main():
@@ -120,11 +126,14 @@ def main():
     all_sprites = pygame.sprite.Group()
     yummies = pygame.sprite.Group()
     grabbies = pygame.sprite.Group()
+    bumpies = pygame.sprite.Group()
+
+    fish_swarm = {}
 
     for i in range(15):
-        fish = Food(WIDTH, DEPTH)
-        all_sprites.add(fish)
-        yummies.add(fish)
+        fish_swarm[i] = Food(WIDTH, DEPTH)
+        all_sprites.add(fish_swarm[i])
+        yummies.add(fish_swarm[i])
 
     player = Player(40, 40, 200, 400)
     tongue = Tongue(player)
@@ -133,6 +142,8 @@ def main():
     all_sprites.add(player)
 
     grabbies.add(tongue)
+
+    bumpies.add(player)
 
     running = True
     while running:
@@ -163,6 +174,11 @@ def main():
             hit = pygame.sprite.groupcollide(grabbies, yummies, False, True)
             if hit:
                 tongue.bullseye()
+
+        for i in range(15):
+            bump = pygame.sprite.spritecollide(fish_swarm[i], bumpies, False, False)
+            if bump:
+                fish_swarm[i].change_course()
 
         screen.fill((0, 0, 0)) 
         all_sprites.draw(screen)
