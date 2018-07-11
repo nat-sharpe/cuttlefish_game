@@ -7,9 +7,6 @@ class Player(pygame.sprite.Sprite):
     swim_right = [pygame.image.load('R-W1.png'), pygame.image.load('R-W2.png'), pygame.image.load('R-W3.png'), pygame.image.load('R-W2.png')]
     swim_left = [pygame.image.load('L-W1.png'), pygame.image.load('L-W2.png'), pygame.image.load('L-W3.png'), pygame.image.load('L-W2.png')]
 
-    squirt_right = [pygame.image.load('R-S1.png'), pygame.image.load('R-S2.png')]
-    squirt_left = [pygame.image.load('L-S1.png'), pygame.image.load('L-S2.png')]
-
     grab_right = [pygame.image.load('R-G1.png'), pygame.image.load('R-G2.png'), pygame.image.load('R-G3.png')]
     grab_left = [pygame.image.load('L-G1.png'), pygame.image.load('L-G2.png'), pygame.image.load('L-G3.png')]
 
@@ -54,6 +51,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.y += y_move
 
     def open_mouth(self):
+        self.rect.height = self.tallness
         self.mouth_open = True 
 
     def eat(self):
@@ -216,6 +214,8 @@ class Tongue(pygame.sprite.Sprite):
         self.right = True
 
 class Food(pygame.sprite.Sprite):
+    swimming = [pygame.image.load('FOOD_1.png'), pygame.image.load('FOOD_2.png'), pygame.image.load('FOOD_3.png'), pygame.image.load('FOOD_4.png')]
+
     def __init__(self, WIDTH, DEPTH, tongue):
         pygame.sprite.Sprite.__init__(self)
         self.time = 0
@@ -231,6 +231,7 @@ class Food(pygame.sprite.Sprite):
         self.bumped = False
         self.got_caught = False
         self.tongue = tongue
+        self.swim_count = 0
 
     def respawn(self):
             self.rect.x = random.randrange(1000, 2000)
@@ -239,6 +240,16 @@ class Food(pygame.sprite.Sprite):
             self.speedy = random.randrange(-1, 1)
 
     def update(self):
+        if self.swim_count + 1 >= 32:
+            self.swim_count = 0
+        else:
+            self.image = pygame.transform.scale(self.swimming[self.swim_count//8], (25, 20))
+            self.swim_count += 1
+        # elif self.right:
+        #     self.image = pygame.transform.scale(self.swimming[self.swim_count//8], (25, 20))
+        #     self.image = pygame.transform.flip(self.image, False, True)
+        #     self.swim_count += 1 
+            
         if self.got_caught and self.tongue.left:
             self.rect = self.image.get_rect()
             self.rect.centerx = self.tongue.rect.left
@@ -289,7 +300,6 @@ class Food(pygame.sprite.Sprite):
 #         self.rect.centery = self.player.rect.centery
 
 
-
 def main():
     pygame.init()
 
@@ -324,7 +334,6 @@ def main():
         all_sprites.add(fish_swarm[i])
         yummies.add(fish_swarm[i])
 
-
     # fear_zone = FearZone(player)
     # all_sprites.add(fear_zone)
     # bumpies.add(fear_zone)
@@ -333,7 +342,7 @@ def main():
     while running:
         
         clock.tick(60)
-        player_speed = 2
+        player_speed = 3
         keys = pygame.key.get_pressed()
 
         for event in pygame.event.get():
@@ -355,7 +364,7 @@ def main():
             player.moving_x(player_speed)
         if keys[pygame.K_UP] and player.rect.top > 0:
             player.moving_y(-player_speed)
-        if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
+        if keys[pygame.K_DOWN] and player.rect.bottom < (DEPTH + 30):
             player.moving_y(player_speed)             
 
         # if tongue.length > 1:
