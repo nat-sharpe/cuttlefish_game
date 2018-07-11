@@ -1,6 +1,8 @@
 import pygame
 import random
 
+BLUE = (0, 0, 255)
+
 class Player(pygame.sprite.Sprite):
     swim_right = [pygame.image.load('R-W1.png'), pygame.image.load('R-W2.png'), pygame.image.load('R-W3.png'), pygame.image.load('R-W2.png')]
     swim_left = [pygame.image.load('L-W1.png'), pygame.image.load('L-W2.png'), pygame.image.load('L-W3.png'), pygame.image.load('L-W2.png')]
@@ -19,7 +21,7 @@ class Player(pygame.sprite.Sprite):
         self.fatness = fat
         self.tallness = tall 
         self.image = pygame.transform.scale(self.swim_right[0], (self.fatness, self.tallness))
-        self.image.set_colorkey((0, 0, 255))
+        self.image.set_colorkey(BLUE)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -62,23 +64,31 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         if self.squirting:
             self.time += 1
-            if self.time <= 25:
-                self.squirt_left(2, random.randrange(-1, 1))
-                self.squirt_right(2, random.randrange(-1, 1))
+            if self.time <= 20:
+                self.squirt_left(3, random.randrange(-1, 1))
+                self.squirt_right(3, random.randrange(-1, 1))
+            elif self.time <= 30:
+                self.squirt_left(2, 0)
+                self.squirt_right(2, 0)
             elif self.time <= 35:
                 self.squirt_left(1, 0)
                 self.squirt_right(1, 0)
-            elif self.time <= 40:
-                self.squirt_left(.5, 0)
-                self.squirt_right(.5, 0)
             else:
                 self.time = 0
                 self.squirting = False
+        
 
         self.rect.x += self.move_x
         self.rect.y += self.move_y
         self.move_x = 0
         self.move_y = 0
+
+    
+        if self.squirting:
+            if self.right:
+                self.image = pygame.transform.scale(pygame.image.load('L-S1.png'), (self.fatness, self.tallness))
+            if self.left:
+                self.image = pygame.transform.scale(pygame.image.load('R-S1.png'), (self.fatness, self.tallness))
 
         if self.mouth_open:    
             if self.right:
@@ -105,12 +115,12 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.eating = False
 
-        elif self.swim_count + 1 >= 32:
+        elif self.swim_count + 1 >= 32 and not self.squirting:
             self.swim_count = 0
-        elif self.left:
+        elif self.left and not self.squirting:
             self.image = pygame.transform.scale(self.swim_left[self.swim_count//8], (self.fatness, self.tallness))
             self.swim_count += 1
-        elif self.right:
+        elif self.right and not self.squirting:
             self.image = pygame.transform.scale(self.swim_right[self.swim_count//8], (self.fatness, self.tallness))
             self.swim_count += 1 
     
@@ -167,12 +177,12 @@ class Tongue(pygame.sprite.Sprite):
 
         if self.right:
             self.rect = self.image.get_rect()
-            self.rect.left = self.player.rect.right
+            self.rect.left = (self.player.rect.right - 30)
             self.rect.centery = self.player.rect.centery
 
         if self.left:
             self.rect = self.image.get_rect()
-            self.rect.right = self.player.rect.left
+            self.rect.right = (self.player.rect.left + 30)
             self.rect.centery = self.player.rect.centery
 
     def attack(self):
@@ -287,6 +297,9 @@ def main():
     DEPTH = 600
 
     screen = pygame.display.set_mode((WIDTH, DEPTH))
+    background = pygame.transform.scale(pygame.image.load('underwater.png'), (WIDTH, DEPTH))
+    background_rect = background.get_rect()
+
     clock = pygame.time.Clock()
 
     keystate = pygame.key.get_pressed()
@@ -304,7 +317,7 @@ def main():
     grabbies.add(tongue)
 
     fish_swarm = {}
-    fish_count = 30
+    fish_count = 50
 
     for i in range(fish_count):
         fish_swarm[i] = Food(WIDTH, DEPTH, tongue)
@@ -329,7 +342,7 @@ def main():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 player.open_mouth()
                 tongue.attack() 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 player.squirt()
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
@@ -363,15 +376,12 @@ def main():
         #         if fish_swarm[i].bumped == False:
         #             fish_swarm[i].got_bumped()
         #             fish_swarm[i].change_course()
-
-
         all_sprites.update()
-        screen.fill((100, 100, 100))
 
-        # player.draw(screen)
-
+        screen.fill(BLUE)
+        screen.blit(background, background_rect)
         all_sprites.draw(screen)
-
+        
         pygame.display.update()
         
     pygame.quit()
