@@ -2,6 +2,15 @@ import pygame
 import random
 
 class Player(pygame.sprite.Sprite):
+    swim_right = [pygame.image.load('R-W1.png'), pygame.image.load('R-W2.png'), pygame.image.load('R-W3.png'), pygame.image.load('R-W2.png')]
+    swim_left = [pygame.image.load('L-W1.png'), pygame.image.load('L-W2.png'), pygame.image.load('L-W3.png'), pygame.image.load('L-W2.png')]
+
+    squirt_right = [pygame.image.load('R-S1.png'), pygame.image.load('R-S2.png')]
+    squirt_left = [pygame.image.load('L-S1.png'), pygame.image.load('L-S2.png')]
+
+    grab_right = [pygame.image.load('R-G1.png'), pygame.image.load('R-G2.png'), pygame.image.load('R-G3.png')]
+    grab_left = [pygame.image.load('L-G1.png'), pygame.image.load('L-G2.png'), pygame.image.load('L-G3.png')]
+
     def __init__(self, fat, tall, x, y, WIDTH, DEPTH):
         pygame.sprite.Sprite.__init__(self)
         self.screen_width = WIDTH
@@ -9,8 +18,7 @@ class Player(pygame.sprite.Sprite):
         self.time = 0
         self.fatness = fat
         self.tallness = tall
-        self.image = pygame.Surface([self.fatness, self.tallness])
-        self.image.fill((100, 100, 100))
+        self.image = self.swim_right[0]
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -20,6 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.right = True
         self.squirting = False
         self.squirt_speed = 4
+        self.swim_count = 0
 
     def going_left(self):
         self.left = True
@@ -59,6 +68,21 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.move_y
         self.move_x = 0
         self.move_y = 0
+
+    def draw(self, screen):
+        if self.swim_count + 1 >= 32:
+            self.swim_count = 0
+        if self.left:
+            screen.blit(self.swim_left[self.swim_count//8], (self.rect.x, self.rect.y))
+            self.swim_count += 1
+        elif self.right:
+            screen.blit(self.swim_right[self.swim_count//8], (self.rect.x, self.rect.y))
+            self.swim_count += 1 
+        else: 
+            if self.right:
+                screen.blit(self.swim_right[0], (self.rect.x, self.rect.y))
+            else:
+                screen.blit(self.swim_left[0], (self.rect.x, self.rect.y))
         
         # self.time += 1
         # if self.time > 30 and self.time <= 60:
@@ -224,6 +248,8 @@ class Food(pygame.sprite.Sprite):
 #         self.rect.centerx = self.player.rect.centerx
 #         self.rect.centery = self.player.rect.centery
 
+
+
 def main():
     pygame.init()
 
@@ -307,10 +333,13 @@ def main():
         #             fish_swarm[i].got_bumped()
         #             fish_swarm[i].change_course()
 
-        all_sprites.update()
 
-        screen.fill((0, 0, 0)) 
-        all_sprites.draw(screen)
+        all_sprites.update()
+        screen.fill((0, 0, 0))
+
+        player.draw(screen)
+
+        # all_sprites.draw(screen)
         pygame.display.update()
         
     pygame.quit()
