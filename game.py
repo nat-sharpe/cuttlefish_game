@@ -17,8 +17,9 @@ class Player(pygame.sprite.Sprite):
         self.screen_depth = DEPTH
         self.time = 0
         self.fatness = fat
-        self.tallness = tall
-        self.image = self.swim_right[0]
+        self.tallness = tall 
+        self.image = pygame.transform.scale(self.swim_right[0], (self.fatness, self.tallness))
+        self.image.set_colorkey((0, 0, 255))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -69,20 +70,15 @@ class Player(pygame.sprite.Sprite):
         self.move_x = 0
         self.move_y = 0
 
-    def draw(self, screen):
         if self.swim_count + 1 >= 32:
             self.swim_count = 0
         if self.left:
-            screen.blit(self.swim_left[self.swim_count//8], (self.rect.x, self.rect.y))
+            self.image = pygame.transform.scale(self.swim_left[self.swim_count//8], (self.fatness, self.tallness))
             self.swim_count += 1
         elif self.right:
-            screen.blit(self.swim_right[self.swim_count//8], (self.rect.x, self.rect.y))
+            self.image = pygame.transform.scale(self.swim_right[self.swim_count//8], (self.fatness, self.tallness))
             self.swim_count += 1 
-        else: 
-            if self.right:
-                screen.blit(self.swim_right[0], (self.rect.x, self.rect.y))
-            else:
-                screen.blit(self.swim_left[0], (self.rect.x, self.rect.y))
+    
         
         # self.time += 1
         # if self.time > 30 and self.time <= 60:
@@ -105,35 +101,23 @@ class Player(pygame.sprite.Sprite):
 class Tongue(pygame.sprite.Sprite):
     def __init__(self, player):
         pygame.sprite.Sprite.__init__(self)
-        self.fatness = 1
         self.tallness = 20
-        self.image = pygame.Surface([self.fatness, self.tallness])
-        self.image.fill((200, 200, 200))
+        self.length = 1
+        self.image = pygame.transform.scale(pygame.image.load('TONGUE.png'), (self.length, self.tallness))
         self.rect = self.image.get_rect()
         self.player = player
-        self.length = 1
         self.rect.left = self.player.rect.right
         self.rect.centery = self.player.rect.centery
         self.attacking = False
         self.time = 0
         self.speed = 2
-        self.tongue_length = 10
-        self.dist_retract = 1 + (self.tongue_length * 2)
+        self.length_increment = 10
+        self.dist_retract = 1 + (self.length_increment * 2)
         self.hit = False
         self.left = False
         self.right = True
 
     def update(self):
-        if self.right:
-            self.rect = self.image.get_rect()
-            self.rect.left = self.player.rect.right
-            self.rect.centery = self.player.rect.centery
-
-        if self.left:
-            self.rect = self.image.get_rect()
-            self.rect.right = self.player.rect.left
-            self.rect.centery = self.player.rect.centery
-
         if self.attacking:
             self.time += 1
             if self.time == 1:
@@ -146,25 +130,35 @@ class Tongue(pygame.sprite.Sprite):
             if self.time > 20:
                 self.retract()
 
+        if self.right:
+            self.rect = self.image.get_rect()
+            self.rect.left = self.player.rect.right
+            self.rect.centery = self.player.rect.centery
+
+        if self.left:
+            self.rect = self.image.get_rect()
+            self.rect.right = self.player.rect.left
+            self.rect.centery = self.player.rect.centery
+
     def attack(self):
         self.attacking = True
         
     def extend(self):
-        self.length += self.tongue_length
-        self.image = pygame.transform.scale(self.image, (self.length, self.tallness))            
+        self.length += self.length_increment
+        self.image = pygame.transform.scale(pygame.image.load('TONGUE.png'), (self.length, self.tallness))            
 
     def retract(self):
-        if self.length > self.tongue_length:
-            self.length -= self.tongue_length
-            self.image = pygame.transform.scale(self.image, (self.length, self.tallness))
+        if self.length > self.length_increment:
+            self.length -= self.length_increment
+            self.image = pygame.transform.scale(pygame.image.load('TONGUE.png'), (self.length, self.tallness))
         else:
             self.length = 1
-            self.image = pygame.transform.scale(self.image, (self.length, self.tallness))
+            self.image = pygame.transform.scale(pygame.image.load('TONGUE.png'), (self.length, self.tallness))
             self.attacking = False
             self.time = 0
             self.hit = False          
 
-    def bullseye(self):
+    def bullseye(self): 
         self.hit = True
 
     def going_left(self):
@@ -266,7 +260,7 @@ def main():
     grabbies = pygame.sprite.Group()
     # bumpies = pygame.sprite.Group()
 
-    player = Player(80, 60, 200, 400, WIDTH, DEPTH)
+    player = Player(100, 60, 200, 400, WIDTH, DEPTH)
     all_sprites.add(player)
 
     tongue = Tongue(player)
@@ -297,7 +291,7 @@ def main():
             if event.type == pygame.QUIT or keys[pygame.K_q]:
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                tongue.attack()
+                tongue.attack() 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 player.squirt()
 
@@ -335,11 +329,12 @@ def main():
 
 
         all_sprites.update()
-        screen.fill((0, 0, 0))
+        screen.fill((100, 100, 100))
 
-        player.draw(screen)
+        # player.draw(screen)
 
-        # all_sprites.draw(screen)
+        all_sprites.draw(screen)
+
         pygame.display.update()
         
     pygame.quit()
