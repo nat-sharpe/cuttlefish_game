@@ -30,6 +30,8 @@ class Player(pygame.sprite.Sprite):
         self.squirting = False
         self.squirt_speed = 4
         self.swim_count = 0
+        self.eating = False
+        self.mouth_open = False
 
     def going_left(self):
         self.left = True
@@ -49,7 +51,15 @@ class Player(pygame.sprite.Sprite):
             self.rect.x -= (self.squirt_speed * speed)
             self.rect.y += y_move
 
-    def update(self):   
+    def open_mouth(self):
+        self.mouth_open = True 
+
+    def eat(self):
+        self.mouth_open = False
+        self.eating = True
+        self.swim_count = 0
+
+    def update(self):
         if self.squirting:
             self.time += 1
             if self.time <= 25:
@@ -70,9 +80,34 @@ class Player(pygame.sprite.Sprite):
         self.move_x = 0
         self.move_y = 0
 
-        if self.swim_count + 1 >= 32:
+        if self.mouth_open:    
+            if self.right:
+                self.image = pygame.transform.scale(self.grab_right[0], (self.fatness, self.tallness))
+            if self.left:
+                self.image = pygame.transform.scale(self.grab_left[0], (self.fatness, self.tallness))
+
+        elif self.eating:
+            if self.swim_count < 5:
+                if self.left:
+                    self.image = pygame.transform.scale(self.grab_left[1], (self.fatness, self.tallness))
+                    self.swim_count += 1
+                elif self.right:
+                    self.image = pygame.transform.scale(self.grab_right[1], (self.fatness, self.tallness))
+                    self.swim_count += 1
+
+            elif self.swim_count >= 5 and self.swim_count < 9:
+                if self.left:
+                    self.image = pygame.transform.scale(self.grab_left[2], (self.fatness, self.tallness))
+                    self.swim_count += 1
+                elif self.right:
+                    self.image = pygame.transform.scale(self.grab_right[2], (self.fatness, self.tallness))
+                    self.swim_count += 1
+            else:
+                self.eating = False
+
+        elif self.swim_count + 1 >= 32:
             self.swim_count = 0
-        if self.left:
+        elif self.left:
             self.image = pygame.transform.scale(self.swim_left[self.swim_count//8], (self.fatness, self.tallness))
             self.swim_count += 1
         elif self.right:
@@ -111,7 +146,7 @@ class Tongue(pygame.sprite.Sprite):
         self.attacking = False
         self.time = 0
         self.speed = 2
-        self.length_increment = 10
+        self.length_increment = 12
         self.dist_retract = 1 + (self.length_increment * 2)
         self.hit = False
         self.left = False
@@ -122,12 +157,12 @@ class Tongue(pygame.sprite.Sprite):
             self.time += 1
             if self.time == 1:
                 self.extend()
-            if self.time <= 20:
+            if self.time <= 15:
                 if self.hit:
                    self.retract() 
                 else:
                     self.extend()
-            if self.time > 20:
+            if self.time > 15:
                 self.retract()
 
         if self.right:
@@ -152,6 +187,7 @@ class Tongue(pygame.sprite.Sprite):
             self.length -= self.length_increment
             self.image = pygame.transform.scale(pygame.image.load('TONGUE.png'), (self.length, self.tallness))
         else:
+            self.player.eat()
             self.length = 1
             self.image = pygame.transform.scale(pygame.image.load('TONGUE.png'), (self.length, self.tallness))
             self.attacking = False
@@ -260,7 +296,7 @@ def main():
     grabbies = pygame.sprite.Group()
     # bumpies = pygame.sprite.Group()
 
-    player = Player(100, 60, 200, 400, WIDTH, DEPTH)
+    player = Player(140, 80, 200, 400, WIDTH, DEPTH)
     all_sprites.add(player)
 
     tongue = Tongue(player)
@@ -291,6 +327,7 @@ def main():
             if event.type == pygame.QUIT or keys[pygame.K_q]:
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                player.open_mouth()
                 tongue.attack() 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 player.squirt()
