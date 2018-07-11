@@ -89,6 +89,7 @@ class Tongue(pygame.sprite.Sprite):
         self.hit = False
         self.left = False
         self.right = True
+        self.tongue_length = 10
 
     def update(self):
         if self.right:
@@ -117,12 +118,12 @@ class Tongue(pygame.sprite.Sprite):
         self.attacking = True
         
     def extend(self):
-        self.length += 15
+        self.length += self.tongue_length
         self.image = pygame.transform.scale(self.image, (self.length, 6))            
 
     def retract(self):
-        if self.length > 15:
-            self.length -= 15
+        if self.length > self.tongue_length:
+            self.length -= self.tongue_length
             self.image = pygame.transform.scale(self.image, (self.length, 6))
         else:
             self.length = 1
@@ -145,6 +146,7 @@ class Tongue(pygame.sprite.Sprite):
 class Food(pygame.sprite.Sprite):
     def __init__(self, WIDTH, DEPTH):
         pygame.sprite.Sprite.__init__(self)
+        self.time = 0
         self.width = WIDTH
         self.depth = DEPTH
         self.image = pygame.Surface((25, 20))
@@ -157,13 +159,16 @@ class Food(pygame.sprite.Sprite):
         self.bumped = False
 
     def update(self):
-        self.rect.y += self.speedy
-        self.rect.x += self.speedx
-        if self.rect.bottom < 0 or self.rect.left > self.width or self.rect.right < 0:
-            self.rect.x = random.randrange(1000, 2000)
-            self.rect.y = random.randrange(600)
-            self.speedx = random.randrange(-2, -1)
-            self.speedy = random.randrange(-1, 1)
+        self.time += 1
+        if self.time == 3:
+            self.rect.y += self.speedy
+            self.rect.x += self.speedx
+            if self.rect.bottom < 0 or self.rect.left > self.width or self.rect.right < 0:
+                self.rect.x = random.randrange(1000, 2000)
+                self.rect.y = random.randrange(600)
+                self.speedx = random.randrange(-2, -1)
+                self.speedy = random.randrange(-1, 1)
+            self.time = 0
     
     def change_course(self):
         self.speedx = -self.speedx
@@ -233,7 +238,7 @@ def main():
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 tongue.attack()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 player.squirt()
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
