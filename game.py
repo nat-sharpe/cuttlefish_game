@@ -2,8 +2,11 @@ import pygame
 import random
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, fat, tall, x, y):
+    def __init__(self, fat, tall, x, y, WIDTH, DEPTH):
         pygame.sprite.Sprite.__init__(self)
+        self.screen_width = WIDTH
+        self.screen_depth = DEPTH
+        self.time = 0
         self.fatness = fat
         self.tallness = tall
         self.image = pygame.Surface([self.fatness, self.tallness])
@@ -13,9 +16,10 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = y
         self.move_x = 0
         self.move_y = 0
-
         self.left = False
         self.right = True
+        self.squirting = False
+        self.squirt_speed = 4
 
     def going_left(self):
         self.left = True
@@ -25,12 +29,40 @@ class Player(pygame.sprite.Sprite):
         self.left = False
         self.right = True
 
+    def squirt_right(self, speed, y_move):
+        if self.left and self.rect.right < (self.screen_width - self.squirt_speed):
+            self.rect.x += (self.squirt_speed * speed)
+            self.rect.y += y_move
+
+    def squirt_left(self, speed, y_move):
+        if self.right and self.rect.left > (0 + self.squirt_speed):
+            self.rect.x -= (self.squirt_speed * speed)
+            self.rect.y += y_move
+
     def update(self):   
+        if self.squirting:
+            self.time += 1
+            if self.time <= 25:
+                self.squirt_left(2, random.randrange(-1, 1))
+                self.squirt_right(2, random.randrange(-1, 1))
+            elif self.time <= 35:
+                self.squirt_left(1, 0)
+                self.squirt_right(1, 0)
+            elif self.time <= 40:
+                self.squirt_left(.5, 0)
+                self.squirt_right(.5, 0)
+            else:
+                self.time = 0
+                self.squirting = False
+
         self.rect.x += self.move_x
         self.rect.y += self.move_y
         self.move_x = 0
         self.move_y = 0
 
+    def squirt(self):
+        self.squirting = True
+        
     def moving_x(self, direction):
         self.move_x = direction
 
@@ -55,7 +87,6 @@ class Tongue(pygame.sprite.Sprite):
         self.dist_extend = 10
         self.dist_retract = 1 + (self.dist_extend * 2)
         self.hit = False
-        
         self.left = False
         self.right = True
 
@@ -179,7 +210,7 @@ def main():
         all_sprites.add(fish_swarm[i])
         yummies.add(fish_swarm[i])
 
-    player = Player(40, 40, 200, 400)
+    player = Player(60, 40, 200, 400, WIDTH, DEPTH)
     all_sprites.add(player)
 
     tongue = Tongue(player)
@@ -194,27 +225,29 @@ def main():
     while running:
         
         clock.tick(60)
-
+        player_speed = 2
         keys = pygame.key.get_pressed()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT or keys[pygame.K_q]:
                 running = False
-            if event.type == pygame.KEYDOWN and event.key == 32:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 tongue.attack()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+                player.squirt()
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
             player.going_left()
             tongue.going_left()
-            player.moving_x(-2)
+            player.moving_x(-player_speed)
         if keys[pygame.K_RIGHT] and player.rect.right < WIDTH:
             player.going_right()
             tongue.going_right()
-            player.moving_x(2)
+            player.moving_x(player_speed)
         if keys[pygame.K_UP] and player.rect.top > 0:
-            player.moving_y(-2)
+            player.moving_y(-player_speed)
         if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
-            player.moving_y(2)             
+            player.moving_y(player_speed)             
 
         if tongue.length > 1:
             hit = pygame.sprite.groupcollide(grabbies, yummies, False, True)
