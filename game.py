@@ -59,6 +59,15 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.move_y
         self.move_x = 0
         self.move_y = 0
+        
+        # self.time += 1
+        # if self.time > 30 and self.time <= 60:
+        #     self.rect.x += (self.move_x / 2)
+        #     self.rect.y += (self.move_y / 2)
+        # elif self.time > 60:
+        #     self.move_x = 0
+        #     self.move_y = 0
+        #     self.time = 0
 
     def squirt(self):
         self.squirting = True
@@ -73,7 +82,7 @@ class Tongue(pygame.sprite.Sprite):
     def __init__(self, player):
         pygame.sprite.Sprite.__init__(self)
         self.fatness = 1
-        self.tallness = 6
+        self.tallness = 20
         self.image = pygame.Surface([self.fatness, self.tallness])
         self.image.fill((200, 200, 200))
         self.rect = self.image.get_rect()
@@ -84,12 +93,11 @@ class Tongue(pygame.sprite.Sprite):
         self.attacking = False
         self.time = 0
         self.speed = 2
-        self.dist_extend = 10
-        self.dist_retract = 1 + (self.dist_extend * 2)
+        self.tongue_length = 10
+        self.dist_retract = 1 + (self.tongue_length * 2)
         self.hit = False
         self.left = False
         self.right = True
-        self.tongue_length = 10
 
     def update(self):
         if self.right:
@@ -119,15 +127,15 @@ class Tongue(pygame.sprite.Sprite):
         
     def extend(self):
         self.length += self.tongue_length
-        self.image = pygame.transform.scale(self.image, (self.length, 6))            
+        self.image = pygame.transform.scale(self.image, (self.length, self.tallness))            
 
     def retract(self):
         if self.length > self.tongue_length:
             self.length -= self.tongue_length
-            self.image = pygame.transform.scale(self.image, (self.length, 6))
+            self.image = pygame.transform.scale(self.image, (self.length, self.tallness))
         else:
             self.length = 1
-            self.image = pygame.transform.scale(self.image, (self.length, 6))
+            self.image = pygame.transform.scale(self.image, (self.length, self.tallness))
             self.attacking = False
             self.time = 0
             self.hit = False          
@@ -209,13 +217,14 @@ def main():
     bumpies = pygame.sprite.Group()
 
     fish_swarm = {}
-
-    for i in range(15):
+    fish_count = 30
+    
+    for i in range(fish_count):
         fish_swarm[i] = Food(WIDTH, DEPTH)
         all_sprites.add(fish_swarm[i])
         yummies.add(fish_swarm[i])
 
-    player = Player(60, 40, 200, 400, WIDTH, DEPTH)
+    player = Player(80, 60, 200, 400, WIDTH, DEPTH)
     all_sprites.add(player)
 
     tongue = Tongue(player)
@@ -259,7 +268,7 @@ def main():
             if hit:
                 tongue.bullseye()
     
-        for i in range(15):
+        for i in range(fish_count):
             bump = pygame.sprite.spritecollide(fish_swarm[i], bumpies, False, False)
             if bump:
                 if fish_swarm[i].bumped == False:
