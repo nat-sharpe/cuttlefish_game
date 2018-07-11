@@ -114,12 +114,12 @@ class Tongue(pygame.sprite.Sprite):
             self.time += 1
             if self.time == 1:
                 self.extend()
-            if self.time <= 10:
+            if self.time <= 20:
                 if self.hit:
                    self.retract() 
                 else:
                     self.extend()
-            if self.time > 10:
+            if self.time > 20:
                 self.retract()
 
     def attack(self):
@@ -152,7 +152,7 @@ class Tongue(pygame.sprite.Sprite):
         self.right = True
 
 class Food(pygame.sprite.Sprite):
-    def __init__(self, WIDTH, DEPTH):
+    def __init__(self, WIDTH, DEPTH, tongue):
         pygame.sprite.Sprite.__init__(self)
         self.time = 0
         self.width = WIDTH
@@ -165,40 +165,64 @@ class Food(pygame.sprite.Sprite):
         self.speedx = random.randrange(-2, -1)
         self.speedy = random.randrange(-1, 1)
         self.bumped = False
+        self.got_caught = False
+        self.tongue = tongue
+
+    def respawn(self):
+            self.rect.x = random.randrange(1000, 2000)
+            self.rect.y = random.randrange(600)
+            self.speedx = random.randrange(-2, -1)
+            self.speedy = random.randrange(-1, 1)
 
     def update(self):
+        if self.got_caught and self.tongue.left:
+            self.rect = self.image.get_rect()
+            self.rect.centerx = self.tongue.rect.left
+            self.rect.y = self.tongue.rect.y
+            if self.tongue.length == 1:
+                self.got_caught = False
+                self.respawn()
+        elif self.got_caught and self.tongue.right:
+            self.rect = self.image.get_rect()
+            self.rect.centerx = self.tongue.rect.right
+            self.rect.y = self.tongue.rect.y
+            if self.tongue.length == 1:
+                self.got_caught = False
+                self.respawn()
+
         self.time += 1
         if self.time == 3:
             self.rect.y += self.speedy
             self.rect.x += self.speedx
             if self.rect.bottom < 0 or self.rect.left > self.width or self.rect.right < 0:
-                self.rect.x = random.randrange(1000, 2000)
-                self.rect.y = random.randrange(600)
-                self.speedx = random.randrange(-2, -1)
-                self.speedy = random.randrange(-1, 1)
+                self.respawn()
             self.time = 0
-    
-    def change_course(self):
-        self.speedx = -self.speedx
-        self.speedy = -self.speedy 
-    
-    def got_bumped(self):
-        bumped = True
 
-class FearZone(pygame.sprite.Sprite):
-    def __init__(self, player):
-        pygame.sprite.Sprite.__init__(self)
-        self.player = player
-        self.image = pygame.Surface((90, 60))
-        self.image.fill((255, 0, 0))
-        self.image.set_colorkey((255, 0, 0))
-        self.rect = self.image.get_rect()
-        self.rect.centerx = self.player.rect.centerx
-        self.rect.centery = self.player.rect.centery
 
-    def update(self):
-        self.rect.centerx = self.player.rect.centerx
-        self.rect.centery = self.player.rect.centery
+    # def change_course(self):
+    #     self.speedx = -self.speedx
+    #     self.speedy = -self.speedy 
+    
+    # def got_bumped(self):
+    #     self.bumped = True
+    
+    def caught(self):
+        self.got_caught = True
+
+# class FearZone(pygame.sprite.Sprite):
+#     def __init__(self, player):
+#         pygame.sprite.Sprite.__init__(self)
+#         self.player = player
+#         self.image = pygame.Surface((90, 60))
+#         self.image.fill((255, 0, 0))
+#         self.image.set_colorkey((255, 0, 0))
+#         self.rect = self.image.get_rect()
+#         self.rect.centerx = self.player.rect.centerx
+#         self.rect.centery = self.player.rect.centery
+
+#     def update(self):
+#         self.rect.centerx = self.player.rect.centerx
+#         self.rect.centery = self.player.rect.centery
 
 def main():
     pygame.init()
@@ -214,15 +238,7 @@ def main():
     all_sprites = pygame.sprite.Group()
     yummies = pygame.sprite.Group()
     grabbies = pygame.sprite.Group()
-    bumpies = pygame.sprite.Group()
-
-    fish_swarm = {}
-    fish_count = 30
-    
-    for i in range(fish_count):
-        fish_swarm[i] = Food(WIDTH, DEPTH)
-        all_sprites.add(fish_swarm[i])
-        yummies.add(fish_swarm[i])
+    # bumpies = pygame.sprite.Group()
 
     player = Player(80, 60, 200, 400, WIDTH, DEPTH)
     all_sprites.add(player)
@@ -231,9 +247,18 @@ def main():
     all_sprites.add(tongue)
     grabbies.add(tongue)
 
-    fear_zone = FearZone(player)
-    all_sprites.add(fear_zone)
-    bumpies.add(fear_zone)
+    fish_swarm = {}
+    fish_count = 30
+
+    for i in range(fish_count):
+        fish_swarm[i] = Food(WIDTH, DEPTH, tongue)
+        all_sprites.add(fish_swarm[i])
+        yummies.add(fish_swarm[i])
+
+
+    # fear_zone = FearZone(player)
+    # all_sprites.add(fear_zone)
+    # bumpies.add(fear_zone)
 
     running = True
     while running:
@@ -263,17 +288,24 @@ def main():
         if keys[pygame.K_DOWN] and player.rect.bottom < DEPTH:
             player.moving_y(player_speed)             
 
+        # if tongue.length > 1:
+        #     hit = pygame.sprite.groupcollide(grabbies, yummies, False, True)
+        #     if hit:
+        #         tongue.bullseye()
+
         if tongue.length > 1:
-            hit = pygame.sprite.groupcollide(grabbies, yummies, False, True)
-            if hit:
-                tongue.bullseye()
+            for i in range(fish_count):
+                hit = pygame.sprite.spritecollide(fish_swarm[i], grabbies, False, False)
+                if hit:
+                    tongue.bullseye()
+                    fish_swarm[i].caught()
     
-        for i in range(fish_count):
-            bump = pygame.sprite.spritecollide(fish_swarm[i], bumpies, False, False)
-            if bump:
-                if fish_swarm[i].bumped == False:
-                    fish_swarm[i].got_bumped()
-                    fish_swarm[i].change_course()
+        # for i in range(fish_count):
+        #     bump = pygame.sprite.spritecollide(fish_swarm[i], bumpies, False, False)
+        #     if bump:
+        #         if fish_swarm[i].bumped == False:
+        #             fish_swarm[i].got_bumped()
+        #             fish_swarm[i].change_course()
 
         all_sprites.update()
 
