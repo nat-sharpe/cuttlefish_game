@@ -258,6 +258,8 @@ class Food(pygame.sprite.Sprite):
             self.rect = self.image.get_rect()
             self.rect.centerx = self.tongue.rect.left
             self.rect.centery = self.tongue.rect.centery
+            if self.tongue.length > 1 and self.tongue.length < 5:
+                point_score.play()
             if self.tongue.length == 1:
                 self.got_caught = False
                 self.respawn()
@@ -266,6 +268,8 @@ class Food(pygame.sprite.Sprite):
             self.rect = self.image.get_rect()
             self.rect.centerx = self.tongue.rect.right
             self.rect.centery = self.tongue.rect.centery
+            if self.tongue.length > 1 and self.tongue.length < 5:
+                point_score.play()
             if self.tongue.length == 1:
                 self.got_caught = False
                 self.respawn()
@@ -279,30 +283,8 @@ class Food(pygame.sprite.Sprite):
                 self.respawn()
             self.time = 0
 
-    # def change_course(self):
-    #     self.speedx = -self.speedx
-    #     self.speedy = -self.speedy 
-    
-    # def got_bumped(self):
-    #     self.bumped = True
-    
     def caught(self):
         self.got_caught = True
-
-# class FearZone(pygame.sprite.Sprite):
-#     def __init__(self, player):
-#         pygame.sprite.Sprite.__init__(self)
-#         self.player = player
-#         self.image = pygame.Surface((90, 60))
-#         self.image.fill((255, 0, 0))
-#         self.image.set_colorkey((255, 0, 0))
-#         self.rect = self.image.get_rect()
-#         self.rect.centerx = self.player.rect.centerx
-#         self.rect.centery = self.player.rect.centery
-
-#     def update(self):
-#         self.rect.centerx = self.player.rect.centerx
-#         self.rect.centery = self.player.rect.centery
 
 def main():
     pygame.init()
@@ -315,9 +297,14 @@ def main():
     background_rect = background.get_rect()
 
     pygame.mixer.init()
-    slurp = pygame.mixer.Sound('Pickup_03.ogg') 
-    music = pygame.mixer.Sound('Cyberpunk Moonlight Sonata.ogg') 
-    point_score = pygame.mixer.Sound('Collect_Point_00.ogg')
+    slurp = pygame.mixer.Sound('impactsplat08.ogg')
+    music = pygame.mixer.Sound('mushroom dance_0.ogg')
+    point_score = pygame.mixer.Sound('Coin01.ogg')
+    eat_noises = [pygame.mixer.Sound('eat_01.ogg'), pygame.mixer.Sound('eat_02.ogg'), pygame.mixer.Sound('eat_03.ogg'), pygame.mixer.Sound('eat_04.ogg')]
+    squirt_noise = pygame.mixer.Sound('impactsplat07.ogg')
+    lose_noise = pygame.mixer.Sound('Jingle_Lose_00.ogg')
+    win_noise = pygame.mixer.Sound('Jingle_Win_00.ogg')
+    countdown = pygame.mixer.Sound('Menu_Navigate_03.ogg')
 
     clock = pygame.time.Clock()
 
@@ -337,7 +324,7 @@ def main():
     def show_start_screen():
         screen.blit(background, background_rect)
         text_draw(screen, 'CUTTLEFISH DO', 80, WIDTH / 2, DEPTH / 4)
-        text_draw(screen, 'Arrows to move - Space to eat - Enter to splort', 40, WIDTH / 2, DEPTH / 2)
+        text_draw(screen, 'Arrows to move - Space to eat - Enter to splurt', 40, WIDTH / 2, DEPTH / 2)
         text_draw(screen, 'Press a key to begin', 30, WIDTH / 2, DEPTH * 3/4)
         pygame.display.flip()
         waiting = True
@@ -350,6 +337,7 @@ def main():
                     waiting = False
 
     def show_lose_screen():
+        lose_noise.play()
         screen.blit(background, background_rect)
         text_draw(screen, 'GAME OVER', 80, WIDTH / 2, DEPTH / 4)
         text_draw(screen, 'Press C to continue', 30, WIDTH / 2, DEPTH * 3/4)
@@ -365,6 +353,7 @@ def main():
        
 
     def show_win_screen():
+        win_noise.play()
         screen.blit(background, background_rect)
         text_draw(screen, 'LEVEL COMPLETED', 80, WIDTH / 2, DEPTH / 4)
         text_draw(screen, '%s fish eaten with %s seconds left' % (win_score, time_second), 50, WIDTH / 2, DEPTH / 2)
@@ -399,7 +388,6 @@ def main():
             all_sprites = pygame.sprite.Group()
             yummies = pygame.sprite.Group()
             grabbies = pygame.sprite.Group()
-            # bumpies = pygame.sprite.Group()
 
             player = Player(140, 80, 100, 500, WIDTH, DEPTH)
             all_sprites.add(player)
@@ -415,10 +403,6 @@ def main():
                 fish_swarm[i] = Food(WIDTH, DEPTH, tongue)
                 all_sprites.add(fish_swarm[i])
                 yummies.add(fish_swarm[i])
-
-            # fear_zone = FearZone(player)
-            # all_sprites.add(fear_zone)
-            # bumpies.add(fear_zone)
         
         if time == 0:
             show_lose_screen()
@@ -437,11 +421,13 @@ def main():
             if event.type == pygame.QUIT or keys[pygame.K_q]:
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                slurp.play()
+                if not player.mouth_open:
+                    slurp.play()
                 player.open_mouth()
                 tongue.attack() 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 player.squirt()
+                squirt_noise.play()
 
         if keys[pygame.K_LEFT] and player.rect.left > 0:
             player.going_left()
@@ -456,11 +442,6 @@ def main():
         if keys[pygame.K_DOWN] and player.rect.bottom < (DEPTH + 30):
             player.moving_y(player_speed)             
 
-        # if tongue.length > 1:
-        #     hit = pygame.sprite.groupcollide(grabbies, yummies, False, True)
-        #     if hit:
-        #         tongue.bullseye()
-
         if tongue.length > 1:
             for i in range(fish_count):
                 hit = pygame.sprite.spritecollide(fish_swarm[i], grabbies, False, False)
@@ -473,15 +454,10 @@ def main():
         if tongue.killed:
             current_score += 1
             tongue.kill_reset()
+            eat_noises[random.randrange(0, 4)].play()
             point_score.play()
-
     
-        # for i in range(fish_count):
-        #     bump = pygame.sprite.spritecollide(fish_swarm[i], bumpies, False, False)
-        #     if bump:
-        #         if fish_swarm[i].bumped == False:
-        #             fish_swarm[i].got_bumped()
-        #             fish_swarm[i].change_course()
+
         all_sprites.update()
 
         screen.blit(background, background_rect)
@@ -502,8 +478,12 @@ def main():
     
         if time % 60 == 0:
             time_second -= 1
+            if time_second < 11:
+                countdown.play()
+
         if time_second > 9:
             text_draw(screen, '0:%s' % time_second, 60, 80, 20)
+         
         else:
             text_draw(screen, '0:0%s' % time_second, 60, 80, 20)
         
