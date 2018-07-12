@@ -306,7 +306,6 @@ class Food(pygame.sprite.Sprite):
 #         self.rect.centerx = self.player.rect.centerx
 #         self.rect.centery = self.player.rect.centery
 
-
 def main():
     pygame.init()
 
@@ -320,7 +319,8 @@ def main():
     clock = pygame.time.Clock()
 
     score = 0
-    time = 0
+    time = 3000
+    time_second = 29
 
     keystate = pygame.key.get_pressed()
 
@@ -348,15 +348,24 @@ def main():
     # all_sprites.add(fear_zone)
     # bumpies.add(fear_zone)
 
+    font_name = pygame.font.match_font('arial')
+    
+    def text_draw(surf, text, size, x, y):
+        font = pygame.font.Font(font_name, size)
+        text_surface = font.render(text, True, ((150, 230, 255)))
+        text_rect = text_surface.get_rect()
+        text_rect.midtop = (x, y)
+        surf.blit(text_surface, text_rect)
+
     running = True
     while running:
         clock.tick(60)
-
-        time += 1
-        if time == 6000:
+    
+        time -= 1
+        if time == 0:
             running = False
 
-        if score > 20:
+        if score == 20:
             running = False
         
         player_speed = 3
@@ -414,7 +423,20 @@ def main():
         screen.fill(BLUE)
         screen.blit(background, background_rect)
         all_sprites.draw(screen)
+        # text_draw(screen, str(score), 50, WIDTH / 2, 10)
+        text_draw(screen, '%s of 20' % score, 60, WIDTH - 100, 20)
+
+        if time > 2939:
+            text_draw(screen, '0:30', 60, 80, 20)
+        else:
+            if time % 60 == 0:
+                time_second -= 1
+            text_draw(screen, '0:%s' % time_second, 60, 80, 20)
+
         
+           
+        
+
         pygame.display.update()
         
     pygame.quit()
