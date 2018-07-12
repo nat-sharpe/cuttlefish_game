@@ -232,8 +232,8 @@ class Food(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(1000, 2000)
         self.rect.y = random.randrange(600)
-        self.speedx = random.randrange(-2, -1)
-        self.speedy = random.randrange(-1, 1)
+        self.speedx = random.randrange(-3, -1)
+        self.speedy = random.randrange(-2, 2)
         self.bumped = False
         self.got_caught = False
         self.tongue = tongue
@@ -243,8 +243,8 @@ class Food(pygame.sprite.Sprite):
     def respawn(self):
             self.rect.x = random.randrange(1000, 2000)
             self.rect.y = random.randrange(600)
-            self.speedx = random.randrange(-2, -1)
-            self.speedy = random.randrange(-1, 1)
+            self.speedx = random.randrange(-3, -1)
+            self.speedy = random.randrange(-2, 2)
 
     def reset(self):
         self.dead = False
@@ -274,7 +274,7 @@ class Food(pygame.sprite.Sprite):
                 self.tongue.kill_count()
 
         self.time += 1
-        if self.time == 3:
+        if self.time == 2:
             self.rect.y += self.speedy
             self.rect.x += self.speedx
             if self.rect.bottom < 0 or self.rect.left > self.width or self.rect.right < 0:
@@ -318,36 +318,9 @@ def main():
 
     clock = pygame.time.Clock()
 
-    win_score = 30
-    current_score = 0
-    time = 1800
-    time_second = 30
+    time = 0
 
     keystate = pygame.key.get_pressed()
-
-    all_sprites = pygame.sprite.Group()
-    yummies = pygame.sprite.Group()
-    grabbies = pygame.sprite.Group()
-    # bumpies = pygame.sprite.Group()
-
-    player = Player(140, 80, (WIDTH / 2) - 100, DEPTH / 2, WIDTH, DEPTH)
-    all_sprites.add(player)
-
-    tongue = Tongue(player)
-    all_sprites.add(tongue)
-    grabbies.add(tongue)
-
-    fish_swarm = {}
-    fish_count = 50
-
-    for i in range(fish_count):
-        fish_swarm[i] = Food(WIDTH, DEPTH, tongue)
-        all_sprites.add(fish_swarm[i])
-        yummies.add(fish_swarm[i])
-
-    # fear_zone = FearZone(player)
-    # all_sprites.add(fear_zone)
-    # bumpies.add(fear_zone)
 
     font_name = pygame.font.match_font('arial')
     
@@ -358,19 +331,102 @@ def main():
         text_rect.midtop = (x, y)
         surf.blit(text_surface, text_rect)
 
-    running = True
-    while running:
-        clock.tick(60)
-    
-        time -= 1
-        if time == 0:
-            running = False
+    def show_start_screen():
+        screen.blit(background, background_rect)
+        text_draw(screen, 'CUTTLEFISH DO', 80, WIDTH / 2, DEPTH / 4)
+        text_draw(screen, 'Arrows to move - Space to eat - Enter to splort', 40, WIDTH / 2, DEPTH / 2)
+        text_draw(screen, 'Press a key to begin', 30, WIDTH / 2, DEPTH * 3/4)
+        pygame.display.flip()
+        waiting = True
+        while waiting:
+            clock.tick(60)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or keys[pygame.K_q]:
+                    pygame.quit()
+                if event.type  == pygame.KEYUP:
+                    waiting = False
 
-        if current_score == win_score:
-            running = False
-        
+    def show_lose_screen():
+        screen.blit(background, background_rect)
+        text_draw(screen, 'THROW OUT YOUR PANTS AND GO HOME', 40, WIDTH / 2, DEPTH / 4)
+        text_draw(screen, 'Press C to continue', 30, WIDTH / 2, DEPTH * 3/4)
+        pygame.display.flip()
+        waiting = True
+        while waiting:
+            clock.tick(60)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or keys[pygame.K_q]:
+                    pygame.quit()
+                if event.type == pygame.KEYUP and event.key == pygame.K_c:
+                    waiting = False
+       
+
+    def show_win_screen():
+        screen.blit(background, background_rect)
+        text_draw(screen, 'FLY YOUR FREAK FLAG!', 80, WIDTH / 2, DEPTH / 4)
+        text_draw(screen, '%s fish eaten in %s seconds' % (win_score, 50-time_second), 50, WIDTH / 2, DEPTH / 2)
+        text_draw(screen, 'Press C to continue', 30, WIDTH / 2, DEPTH * 3/4)
+        pygame.display.flip()
+        waiting = True
+        while waiting:
+            clock.tick(60)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or keys[pygame.K_q]:
+                    pygame.quit()
+                if event.type == pygame.KEYUP and event.key == pygame.K_c:
+                    waiting = False
+
+    running = True
+    game_start = True
+
+    while running:
         player_speed = 3
         keys = pygame.key.get_pressed()
+
+        if game_start:
+            show_start_screen()
+            game_start = False
+            time = 3000
+            win_score = 50
+            current_score = 0
+            time_second = 50
+            
+            all_sprites = pygame.sprite.Group()
+            yummies = pygame.sprite.Group()
+            grabbies = pygame.sprite.Group()
+            # bumpies = pygame.sprite.Group()
+
+            player = Player(140, 80, 100, 500, WIDTH, DEPTH)
+            all_sprites.add(player)
+
+            tongue = Tongue(player)
+            all_sprites.add(tongue)
+            grabbies.add(tongue)
+
+            fish_swarm = {}
+            fish_count = 50
+
+            for i in range(fish_count):
+                fish_swarm[i] = Food(WIDTH, DEPTH, tongue)
+                all_sprites.add(fish_swarm[i])
+                yummies.add(fish_swarm[i])
+
+            # fear_zone = FearZone(player)
+            # all_sprites.add(fear_zone)
+            # bumpies.add(fear_zone)
+        
+        if time == 0:
+            show_lose_screen()
+            game_start = True
+
+
+        if current_score == win_score:
+            show_win_screen()
+            game_start = True
+
+        clock.tick(60)
+        
+        time -= 1
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT or keys[pygame.K_q]:
@@ -424,14 +480,16 @@ def main():
         screen.blit(background, background_rect)
         all_sprites.draw(screen)
 
-        # text_draw(screen, '%s of %s' % (current_score, win_score), 100, WIDTH / 2, 20)
-
-        # if time > 5939:
+        # text_draw(screen, '%s of %s' % (current_score, win_score), 100, WIDTH / 2, 10)
+        # if time > 2939:
         #     text_draw(screen, '1:00', 60, 80, 20)
         # else:
         #     if time % 60 == 0:
         #         time_second -= 1
-        #     text_draw(screen, '0:%s' % time_second, 60, 80, 20)
+        #     if time_second > 9:
+        #         text_draw(screen, '0:%s' % time_second, 60, 80, 20)
+        #     else:
+        #         text_draw(screen, '0:0%s' % time_second, 60, 80, 20)
 
         text_draw(screen, '%s of %s' % (current_score, win_score), 100, WIDTH / 2, 10)
     
@@ -442,9 +500,6 @@ def main():
         else:
             text_draw(screen, '0:0%s' % time_second, 60, 80, 20)
         
-           
-        
-
         pygame.display.update()
         
     pygame.quit()
