@@ -75,12 +75,10 @@ class Player(pygame.sprite.Sprite):
                 self.time = 0
                 self.squirting = False
         
-
         self.rect.x += self.move_x
         self.rect.y += self.move_y
         self.move_x = 0
         self.move_y = 0
-
     
         if self.squirting:
             if self.right:
@@ -159,6 +157,8 @@ class Tongue(pygame.sprite.Sprite):
         self.hit = False
         self.left = False
         self.right = True
+        self.killed = False
+
 
     def update(self):
         if self.attacking:
@@ -205,6 +205,12 @@ class Tongue(pygame.sprite.Sprite):
     def bullseye(self): 
         self.hit = True
 
+    def kill_count(self):
+        self.killed = True
+
+    def kill_reset(self):
+        self.killed = False
+
     def going_left(self):
         self.left = True
         self.right = False
@@ -232,6 +238,7 @@ class Food(pygame.sprite.Sprite):
         self.got_caught = False
         self.tongue = tongue
         self.swim_count = 0
+        self.dead = False
 
     def respawn(self):
             self.rect.x = random.randrange(1000, 2000)
@@ -239,31 +246,32 @@ class Food(pygame.sprite.Sprite):
             self.speedx = random.randrange(-2, -1)
             self.speedy = random.randrange(-1, 1)
 
+    def reset(self):
+        self.dead = False
+
     def update(self):
         if self.swim_count + 1 >= 32:
             self.swim_count = 0
         else:
-            self.image = pygame.transform.scale(self.swimming[self.swim_count//8], (25, 20))
+            self.image = pygame.transform.scale(self.swimming[self.swim_count//8], (45, 30))
             self.swim_count += 1
-        # elif self.right:
-        #     self.image = pygame.transform.scale(self.swimming[self.swim_count//8], (25, 20))
-        #     self.image = pygame.transform.flip(self.image, False, True)
-        #     self.swim_count += 1 
             
         if self.got_caught and self.tongue.left:
             self.rect = self.image.get_rect()
             self.rect.centerx = self.tongue.rect.left
-            self.rect.y = self.tongue.rect.y
+            self.rect.centery = self.tongue.rect.centery
             if self.tongue.length == 1:
                 self.got_caught = False
                 self.respawn()
+                self.tongue.kill_count()
         elif self.got_caught and self.tongue.right:
             self.rect = self.image.get_rect()
             self.rect.centerx = self.tongue.rect.right
-            self.rect.y = self.tongue.rect.y
+            self.rect.centery = self.tongue.rect.centery
             if self.tongue.length == 1:
                 self.got_caught = False
                 self.respawn()
+                self.tongue.kill_count()
 
         self.time += 1
         if self.time == 3:
@@ -272,7 +280,6 @@ class Food(pygame.sprite.Sprite):
             if self.rect.bottom < 0 or self.rect.left > self.width or self.rect.right < 0:
                 self.respawn()
             self.time = 0
-
 
     # def change_course(self):
     #     self.speedx = -self.speedx
@@ -312,6 +319,9 @@ def main():
 
     clock = pygame.time.Clock()
 
+    score = 0
+    time = 0
+
     keystate = pygame.key.get_pressed()
 
     all_sprites = pygame.sprite.Group()
@@ -340,8 +350,15 @@ def main():
 
     running = True
     while running:
-        
         clock.tick(60)
+
+        time += 1
+        if time == 6000:
+            running = False
+
+        if score > 20:
+            running = False
+        
         player_speed = 3
         keys = pygame.key.get_pressed()
 
@@ -362,7 +379,7 @@ def main():
             player.going_right()
             tongue.going_right()
             player.moving_x(player_speed)
-        if keys[pygame.K_UP] and player.rect.top > 0:
+        if keys[pygame.K_UP] and player.rect.top > -30:
             player.moving_y(-player_speed)
         if keys[pygame.K_DOWN] and player.rect.bottom < (DEPTH + 30):
             player.moving_y(player_speed)             
@@ -378,6 +395,13 @@ def main():
                 if hit:
                     tongue.bullseye()
                     fish_swarm[i].caught()
+                    if fish_swarm[i].dead:
+                        fish_swarm[i].reset()
+
+        if tongue.killed:
+            score += 1
+            print score
+            tongue.kill_reset()
     
         # for i in range(fish_count):
         #     bump = pygame.sprite.spritecollide(fish_swarm[i], bumpies, False, False)
