@@ -1,7 +1,6 @@
 import pygame
 import random
 
-BLUE = (0, 0, 255)
 
 class Player(pygame.sprite.Sprite):
     swim_right = [pygame.image.load('R-W1.png'), pygame.image.load('R-W2.png'), pygame.image.load('R-W3.png'), pygame.image.load('R-W2.png')]
@@ -18,7 +17,6 @@ class Player(pygame.sprite.Sprite):
         self.fatness = fat
         self.tallness = tall 
         self.image = pygame.transform.scale(self.swim_right[0], (self.fatness, self.tallness))
-        self.image.set_colorkey(BLUE)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -152,7 +150,7 @@ class Tongue(pygame.sprite.Sprite):
         self.attacking = False
         self.time = 0
         self.speed = 2
-        self.length_increment = 12
+        self.length_increment = 18
         self.dist_retract = 1 + (self.length_increment * 2)
         self.hit = False
         self.left = False
@@ -165,12 +163,12 @@ class Tongue(pygame.sprite.Sprite):
             self.time += 1
             if self.time == 1:
                 self.extend()
-            if self.time <= 15:
+            if self.time <= 10:
                 if self.hit:
                    self.retract() 
                 else:
                     self.extend()
-            if self.time > 15:
+            if self.time > 10:
                 self.retract()
 
         if self.right:
@@ -232,8 +230,8 @@ class Food(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(1000, 2000)
         self.rect.y = random.randrange(600)
-        self.speedx = random.randrange(-3, -1)
-        self.speedy = random.randrange(-2, 2)
+        self.speedx = random.randrange(-2, -1)
+        self.speedy = random.randrange(-1, 1)
         self.bumped = False
         self.got_caught = False
         self.tongue = tongue
@@ -241,10 +239,10 @@ class Food(pygame.sprite.Sprite):
         self.dead = False
 
     def respawn(self):
-            self.rect.x = random.randrange(1000, 2000)
-            self.rect.y = random.randrange(600)
-            self.speedx = random.randrange(-3, -1)
-            self.speedy = random.randrange(-2, 2)
+        self.rect.x = random.randrange(1000, 2000)
+        self.rect.y = random.randrange(600)
+        self.speedx = random.randrange(-3, -1)
+        self.speedy = random.randrange(-2, 2)
 
     def reset(self):
         self.dead = False
@@ -316,6 +314,11 @@ def main():
     background = pygame.transform.scale(pygame.image.load('underwater.png'), (WIDTH, DEPTH))
     background_rect = background.get_rect()
 
+    pygame.mixer.init()
+    slurp = pygame.mixer.Sound('Pickup_03.ogg') 
+    music = pygame.mixer.Sound('Cyberpunk Moonlight Sonata.ogg') 
+    point_score = pygame.mixer.Sound('Collect_Point_00.ogg')
+
     clock = pygame.time.Clock()
 
     time = 0
@@ -348,7 +351,7 @@ def main():
 
     def show_lose_screen():
         screen.blit(background, background_rect)
-        text_draw(screen, 'THROW OUT YOUR PANTS AND GO HOME', 40, WIDTH / 2, DEPTH / 4)
+        text_draw(screen, 'GAME OVER', 80, WIDTH / 2, DEPTH / 4)
         text_draw(screen, 'Press C to continue', 30, WIDTH / 2, DEPTH * 3/4)
         pygame.display.flip()
         waiting = True
@@ -363,8 +366,8 @@ def main():
 
     def show_win_screen():
         screen.blit(background, background_rect)
-        text_draw(screen, 'FLY YOUR FREAK FLAG!', 80, WIDTH / 2, DEPTH / 4)
-        text_draw(screen, '%s fish eaten in %s seconds' % (win_score, 50-time_second), 50, WIDTH / 2, DEPTH / 2)
+        text_draw(screen, 'LEVEL COMPLETED', 80, WIDTH / 2, DEPTH / 4)
+        text_draw(screen, '%s fish eaten with %s seconds left' % (win_score, time_second), 50, WIDTH / 2, DEPTH / 2)
         text_draw(screen, 'Press C to continue', 30, WIDTH / 2, DEPTH * 3/4)
         pygame.display.flip()
         waiting = True
@@ -391,6 +394,8 @@ def main():
             current_score = 0
             time_second = 50
             
+            music.play()
+
             all_sprites = pygame.sprite.Group()
             yummies = pygame.sprite.Group()
             grabbies = pygame.sprite.Group()
@@ -404,7 +409,7 @@ def main():
             grabbies.add(tongue)
 
             fish_swarm = {}
-            fish_count = 50
+            fish_count = 40
 
             for i in range(fish_count):
                 fish_swarm[i] = Food(WIDTH, DEPTH, tongue)
@@ -432,6 +437,7 @@ def main():
             if event.type == pygame.QUIT or keys[pygame.K_q]:
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                slurp.play()
                 player.open_mouth()
                 tongue.attack() 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
@@ -467,6 +473,8 @@ def main():
         if tongue.killed:
             current_score += 1
             tongue.kill_reset()
+            point_score.play()
+
     
         # for i in range(fish_count):
         #     bump = pygame.sprite.spritecollide(fish_swarm[i], bumpies, False, False)
@@ -476,7 +484,6 @@ def main():
         #             fish_swarm[i].change_course()
         all_sprites.update()
 
-        screen.fill(BLUE)
         screen.blit(background, background_rect)
         all_sprites.draw(screen)
 
