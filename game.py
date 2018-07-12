@@ -318,9 +318,10 @@ def main():
 
     clock = pygame.time.Clock()
 
-    score = 0
-    time = 3000
-    time_second = 29
+    win_score = 30
+    current_score = 0
+    time = 1800
+    time_second = 30
 
     keystate = pygame.key.get_pressed()
 
@@ -329,7 +330,7 @@ def main():
     grabbies = pygame.sprite.Group()
     # bumpies = pygame.sprite.Group()
 
-    player = Player(140, 80, 200, 400, WIDTH, DEPTH)
+    player = Player(140, 80, (WIDTH / 2) - 100, DEPTH / 2, WIDTH, DEPTH)
     all_sprites.add(player)
 
     tongue = Tongue(player)
@@ -365,7 +366,7 @@ def main():
         if time == 0:
             running = False
 
-        if score == 20:
+        if current_score == win_score:
             running = False
         
         player_speed = 3
@@ -408,8 +409,7 @@ def main():
                         fish_swarm[i].reset()
 
         if tongue.killed:
-            score += 1
-            print score
+            current_score += 1
             tongue.kill_reset()
     
         # for i in range(fish_count):
@@ -423,16 +423,24 @@ def main():
         screen.fill(BLUE)
         screen.blit(background, background_rect)
         all_sprites.draw(screen)
-        # text_draw(screen, str(score), 50, WIDTH / 2, 10)
-        text_draw(screen, '%s of 20' % score, 60, WIDTH - 100, 20)
 
-        if time > 2939:
-            text_draw(screen, '0:30', 60, 80, 20)
-        else:
-            if time % 60 == 0:
-                time_second -= 1
+        # text_draw(screen, '%s of %s' % (current_score, win_score), 100, WIDTH / 2, 20)
+
+        # if time > 5939:
+        #     text_draw(screen, '1:00', 60, 80, 20)
+        # else:
+        #     if time % 60 == 0:
+        #         time_second -= 1
+        #     text_draw(screen, '0:%s' % time_second, 60, 80, 20)
+
+        text_draw(screen, '%s of %s' % (current_score, win_score), 100, WIDTH / 2, 10)
+    
+        if time % 60 == 0:
+            time_second -= 1
+        if time_second > 9:
             text_draw(screen, '0:%s' % time_second, 60, 80, 20)
-
+        else:
+            text_draw(screen, '0:0%s' % time_second, 60, 80, 20)
         
            
         
